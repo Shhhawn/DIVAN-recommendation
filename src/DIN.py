@@ -12,6 +12,7 @@ class DINAttention(nn.Module):
         list = []
         last_dim = embedding_dim * 4
 
+        # 构建注意力网络
         for dim in hidden_dim:
             list.append(nn.Linear(last_dim, dim))
             list.append(nn.ReLU())
