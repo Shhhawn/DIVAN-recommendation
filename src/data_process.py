@@ -276,7 +276,6 @@ class EbnerdDataset(Dataset):
             'imp_time': torch.from_numpy(df['impression_time'].to_numpy().copy()),
             'label': torch.from_numpy(df['labels'].cast(pl.Float32).to_numpy().copy())
         }
-
         self.length = len(df)
 
         del df
