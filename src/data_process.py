@@ -38,6 +38,7 @@ def build_offline_article_vault(
     :param text_emb_path: 文本emb数据集路径
     :param image_emb_path: 图片emb数据集路径
     :param output_dir: 输出文件路径
+    :param dataset_size: 数据集大小
     :param emb_dim: pca降维维度
 
     :return article_ids_mapping_dict: 文章id映射字典{raw_id:mapped_id}
@@ -154,7 +155,7 @@ def process_history_dynamic(
     # ==========================================
     # 1. 提取行为数据并构建画像映射字典
     # ==========================================
-    # 彻底抛弃 lazy，直接 read_parquet 全内存执行，对于 20 万行数据这是最快的
+    #  read_parquet 全内存执行
     df_behavior = (
         pl.read_parquet(behavior_path)
         .drop_nulls('user_id')
@@ -174,7 +175,7 @@ def process_history_dynamic(
 
     # 只有训练集才构建新字典
     if user_ids_mapping_dict is None:
-        print("🔍 正在构建离散特征字典...")
+        print("正在构建离散特征字典...")
         # 临时切片提取字典，用完即毁
         df_temp = df_behavior.select(['user_id', 'age', 'gender', 'device_type'])
         user_ids_mapping_dict = create_id_mapping(df_temp['user_id'])
@@ -189,7 +190,7 @@ def process_history_dynamic(
         # 训练集：打乱并截取 neg_samples 个负样本
         sample_expr = pl.col('neg_candidates').list.eval(pl.element().shuffle()).list.head(neg_samples)
     else:
-        # 验证/测试集：保留同一次曝光下的所有候选新闻，原汁原味！
+        # 验证/测试集：保留同一次曝光下的所有候选新闻
         sample_expr = pl.col('neg_candidates')
 
     # ==========================================
@@ -258,16 +259,9 @@ def process_history_dynamic(
 
 
 class EbnerdDataset(Dataset):
-    def __init__(self, 
-                 parquet_path, 
-                #  news_features_dict, 
-                #  user_history_dict, 
-                #  max_history_len=50, 
-                #  max_topic_len=3
-                 ):
+    def __init__(self, parquet_path):
         """
-        :param behavior_dict_list: process_history_dynamic 输出的字典列表
-        :param news_features_dict: 离线构建的文章属性字典 (包含 published_ts 等)
+        :param parquet_path: process_history_dynamic 输出的字典列表
         """
         print(f"加载{parquet_path}...")
         df = pl.read_parquet(parquet_path)

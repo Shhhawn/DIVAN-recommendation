@@ -5,7 +5,7 @@ class CrossLayer(nn.Module):
     def __init__(self, layer_num, embedding_dim):
         """
         :param layer_num: 交叉层的层数 (通常设为 2 到 3 层)
-        :param input_dim: 输入特征的总维度 (比如时间和内容拼接后是 128 维)
+        :param embedding_dim: 输入特征的总维度 (比如时间和内容拼接后是 128 维)
         """
         super(CrossLayer, self).__init__()
         self.layer_num = layer_num

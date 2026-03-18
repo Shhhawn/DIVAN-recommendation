@@ -29,7 +29,7 @@ import os
 
 
 # ==========================================
-# 0. 参数与路径配置
+# 参数与路径配置
 # ==========================================
 NOW_TS = datetime.now().strftime("%Y%m%d_%H%M%S")
 TRAIN_BATCH_SIZE = 12288
@@ -50,7 +50,7 @@ processed_data_output_dir = os.path.join(output_dir, "processed_data")
 result_dir = os.path.join(output_dir, "results")
 os.makedirs(output_dir, exist_ok=True)
 
-# 2. 处理后的文件路径定义
+# 处理后的文件路径定义
 news_feature_path = os.path.join(processed_data_output_dir, f'{DATASET_SIZE}_news_feature_dict.pkl')
 train_behvior_path = os.path.join(processed_data_output_dir, f'{DATASET_SIZE}_train_behavior.parquet')
 val_behvior_path = os.path.join(processed_data_output_dir, f'{DATASET_SIZE}_val_behavior.parquet')
@@ -65,7 +65,7 @@ val_history_path = os.path.join(processed_data_output_dir, f'{DATASET_SIZE}_val_
 
 def seed_everything(seed=42):
     """
-    封印所有的随机性，保证哪怕换台电脑，跑出来的 AUC 也是一模一样的！
+    设置随机种子
     """
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -103,7 +103,7 @@ def plot_training_metrics(history_dict, output_dir, dataset_size="small"):
     steps = history_dict['steps']
 
     # ==========================================
-    # 子图 1: Loss 曲线 (看收敛与过拟合)
+    # 子图 1: Loss 曲线
     # ==========================================
     ax = axes[0]
     # 找一下当前是否有 train_loss，为了防止维度不匹配，安全获取
@@ -118,7 +118,7 @@ def plot_training_metrics(history_dict, output_dir, dataset_size="small"):
     ax.legend(fontsize=10)
 
     # ==========================================
-    # 子图 2: AUC 曲线 (看分类与排序能力)
+    # 子图 2: AUC 曲线
     # ==========================================
     ax = axes[1]
     if 'group_auc' in history_dict:
@@ -132,7 +132,7 @@ def plot_training_metrics(history_dict, output_dir, dataset_size="small"):
     ax.legend(fontsize=10)
 
     # ==========================================
-    # 子图 3: 排序指标 (NDCG & MRR)
+    # 子图 3: 排序指标
     # ==========================================
     ax = axes[2]
     if 'ndcg_5' in history_dict:
@@ -222,10 +222,10 @@ def evaluate(model, val_loader, device, criterion, mode='DIVAN'):
     with torch.no_grad():
         for batch_dict in tqdm(val_loader, desc="Validation Steps"):
             batch_dict = {k: v.to(device) for k, v in batch_dict.items()}
-                # 修复：接收字典
+            # 接收字典
             return_dict = model(batch_dict) 
                 
-            # 修复：从中提取真正的预测概率
+            # 从中提取真正的预测概率
             y_pred = return_dict["y_pred"].view(-1).float()
             din_proba = return_dict["din_proba"].view(-1).float()
             vir_proba = return_dict["vir_proba"].view(-1).float()
@@ -253,16 +253,16 @@ def evaluate(model, val_loader, device, criterion, mode='DIVAN'):
     global_auc = roc_auc_score(all_labels, all_preds)
 
     # 计算 Group AUC
-    # ① 对 impression_id 进行排序，并拿到排序后的索引
+    # 对 impression_id 进行排序，并拿到排序后的索引
     sort_idx = np.argsort(all_impressions)
     sorted_impressions = all_impressions[sort_idx]
     sorted_preds = all_preds[sort_idx]
     sorted_labels = all_labels[sort_idx]
 
-    # ② 找到 impression_id 发生变化的“边界线”
+    # 找到 impression_id 发生变化的“边界线”
     _, split_indices = np.unique(sorted_impressions, return_index=True)
     
-    # ③ 沿着边界线，一刀切开，直接得到所有分组的 List[ndarray] (耗时近乎 0 毫秒)
+    # 沿着边界线切开，直接得到所有分组的 List[ndarray]
     grouped_preds = np.split(sorted_preds, split_indices[1:])
     grouped_labels = np.split(sorted_labels, split_indices[1:])
 
@@ -309,7 +309,7 @@ def main(model="DIVAN"):
     print(f"当前训练设备: {device}")
     print(f"使用数据集: {DATASET_SIZE}")
     # ==========================================
-    # 1. 离线特征库构建 (仅需跑一次，跑完可落盘)
+    # 离线特征库构建 (仅需跑一次，跑完可落盘)
     # ==========================================
     print("\n" + "="*50)
     print("阶段一: 构建离线特征库")
@@ -325,7 +325,7 @@ def main(model="DIVAN"):
     )
 
     # ==========================================
-    # 2. 在线曝光日志清洗 (划分训练集与验证集)
+    # 在线曝光日志清洗 (划分训练集与验证集)
     # ==========================================
     print("\n" + "="*50)
     print("阶段二: 动态清洗曝光日志 (Train & Val)")
@@ -380,9 +380,9 @@ def main(model="DIVAN"):
 
 
     # ==========================================
-    # 3. 动态计算模型需要的 Vocab Size (词表大小)
+    # 动态计算模型需要的 Vocab Size (词表大小)
     # ==========================================
-    # 因为嵌入层的矩阵大小 = 最大的映射ID + 1 (留给 0 做 padding)
+    # 嵌入层的矩阵大小 = 最大的映射ID + 1 (留给 0 做 padding)
     print("\n正在动态扫描计算各特征的 Vocab Size...")
     user_num = len(u_map) + 1
     article_num = len(article_ids_mapping) + 1
@@ -411,7 +411,7 @@ def main(model="DIVAN"):
     multimodal_matrix = np.load(multimodal_matrix_path)
 
     # ==========================================
-    # 4. 组装 Dataset 和 DataLoader
+    # 组装 Dataset 和 DataLoader
     # ==========================================
     print("\n正在打包 DataLoader...")
     train_dataset = EbnerdDataset(train_behvior_path)
@@ -423,7 +423,7 @@ def main(model="DIVAN"):
     val_loader = DataLoader(val_dataset, batch_size=VAL_BATCH_SIZE, shuffle=False, drop_last=False, num_workers=0, pin_memory=False)
 
     # ==========================================
-    # 5. 实例化 DIVAN 超级引擎
+    # 实例化 DIVAN 超级引擎
     # ==========================================
     print("合并train和val历史数据")
     global_history_dict = {**train_history_dict, **val_history_dict}
@@ -462,7 +462,7 @@ def main(model="DIVAN"):
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
     # ==========================================
-    # 6. 终极大戏：开始训练 (Train Loop)
+    # Train Loop
     # ==========================================
     print("\n训练开始...")
     num_epochs = 50
@@ -491,14 +491,14 @@ def main(model="DIVAN"):
             # 将字典里所有的 Tensor 转移到计算设备 (GPU/MPS) 上
             batch_dict = {k: v.to(device) for k, v in batch_dict.items()}
 
-            # 1. 梯度清零
+            # 梯度清零
             optimizer.zero_grad()
             
-            # 2. 前向传播
+            # 前向传播
             return_dict = model(batch_dict)
             y_true = batch_dict['label'].view(-1)
             
-            # 3. 计算“三重辅助误差” (完全对齐原作者 compute_loss 逻辑)
+            # 计算“三重辅助误差”
             loss_final = criterion(return_dict["y_pred"].view(-1), y_true)
             loss_din = criterion(return_dict["din_proba"].view(-1), y_true)
             loss_pop = criterion(return_dict["vir_proba"].view(-1), y_true)
@@ -509,12 +509,12 @@ def main(model="DIVAN"):
             # 总 Loss
             loss = loss_final + loss_din + loss_pop + loss_alpha_reg
             
-            # 4. 反向传播
+            # 反向传播
             loss.backward()
 
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             
-            # 5. 更新权重
+            # 更新权重
             optimizer.step()
             
             total_loss += loss.item()

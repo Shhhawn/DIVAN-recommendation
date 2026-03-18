@@ -6,18 +6,17 @@ from torch.utils.data import DataLoader
 import joblib
 import numpy as np
 
-# 导入你写好的组件
 from data_process import EbnerdDataset
 from DIVAN import DIVAN
 from FeatureCache import GPUFeatureCache
 
 # ==========================================
-# 0. 压测候选参数 (严格符合硬件对齐玄学)
+# 压测候选参数
 # ==========================================
-# 训练由于需要保存梯度（反向传播计算图），非常吃显存，上限较低
+# 训练由于需要保存梯度，较吃显存，上限较低
 TRAIN_CANDIDATES = [4096, 6144, 8192, 10240, 12288, 16384]
 
-# 验证集不保存梯度，纯前向传播，可以开出极其夸张的尺寸
+# 验证集不保存梯度，纯前向传播，可以调高上限
 VAL_CANDIDATES = [16384, 24576, 32768, 40960, 49152, 65536]
 
 # 压测步数配置
@@ -26,7 +25,7 @@ MEASURE_STEPS = 10    # 计时的稳定步数
 
 def measure_throughput(model, data_loader, device, batch_size, is_train=True):
     """
-    核心压测函数：精准计算每秒处理的样本数 (Samples / Second)
+    核心压测函数：计算每秒处理的样本数 (Samples / Second)
     """
     if is_train:
         model.train()
@@ -38,7 +37,7 @@ def measure_throughput(model, data_loader, device, batch_size, is_train=True):
     
     try:
         # =================================
-        # 1. Warm-up (预热期)
+        # Warm-up
         # =================================
         for _ in range(WARMUP_STEPS):
             batch_dict = next(data_iter)
@@ -58,7 +57,7 @@ def measure_throughput(model, data_loader, device, batch_size, is_train=True):
         torch.cuda.synchronize(device)
         
         # =================================
-        # 2. Measure (精确计时区)
+        # Measure
         # =================================
         start_time = time.time()
         
@@ -103,7 +102,7 @@ def main():
     print(f"开始压测，设备: {device}")
 
     # ==========================================
-    # 1. 模拟环境加载 (与 train.py 保持一致)
+    # 模拟环境加载
     # ==========================================
     print("正在加载必要环境字典...")
     news_feat_dict = joblib.load(os.path.join(output_dir, f'{dataset_size}_news_feature_dict.pkl'))
@@ -146,7 +145,7 @@ def main():
     val_dataset = EbnerdDataset(val_parquet)
 
     # ==========================================
-    # 2. 训练集极限压测 (Train Phase)
+    # 训练集极限压测
     # ==========================================
     print("\n" + "="*50)
     print("阶段一: 寻找【训练集】最优 Batch Size (Train Mode)")
@@ -174,7 +173,7 @@ def main():
         torch.cuda.empty_cache() # 测完一个清理一个
 
     # ==========================================
-    # 3. 验证集极限压测 (Validation Phase)
+    # 验证集极限压测
     # ==========================================
     print("\n" + "="*50)
     print("阶段二: 寻找【验证集】最优 Batch Size (Eval Mode)")
@@ -201,7 +200,7 @@ def main():
             
         torch.cuda.empty_cache()
 
-    print("\n" + "🏆 "*20)
+    print("\n" + "-"*20)
     print("压测结论报告：")
     print(f"最优训练 Batch Size: {best_train_bs} (吞吐量: {best_train_tp:,.0f} 样本/秒)")
     print(f"最优验证 Batch Size: {best_val_bs} (吞吐量: {best_val_tp:,.0f} 样本/秒)")

@@ -35,7 +35,7 @@ class DIVAN(nn.Module):
         self.padding_sign = 0
         self.feature_cache = feature_cache
         # ==========================================
-        # 1. 用户侧 Embedding 柜子
+        # 用户侧 Embedding
         # ==========================================
         self.user_embedding = nn.Embedding(user_num, id_emb_dim, padding_idx=self.padding_sign)
         self.age_embedding = nn.Embedding(age_num, age_emb_dim, padding_idx=self.padding_sign)
@@ -49,7 +49,7 @@ class DIVAN(nn.Module):
         
 
         # ==========================================
-        # 2. 物品侧 Embedding 柜子
+        # 物品侧 Embedding
         # ==========================================
         # 因为在处理history的时候用0来padding，因此第0条新闻只是占位符，使用padding_idx=0告诉embedding网络不要更新第0条新闻
         self.article_embedding = nn.Embedding(article_num, id_emb_dim, padding_idx=self.padding_sign)
@@ -62,7 +62,7 @@ class DIVAN(nn.Module):
         self.article_emb_dim = id_emb_dim + article_emb_dim + article_topic_emb_dim + category_embed_dim + subcat_emb_dim + sentiment_emb_dim
 
         # ==========================================
-        # 3. 多模态入库
+        # 多模态入库
         # ==========================================
         
         self.multimodal_embedding = nn.Embedding.from_pretrained(
@@ -72,7 +72,7 @@ class DIVAN(nn.Module):
         )
 
         # ==========================================
-        # 4. 核心子网络
+        # 核心子网络
         # ==========================================
         self.time_linear = nn.Linear(1, recency_dim)
         self.din = DINAttention(embedding_dim=id_emb_dim+category_embed_dim+content_dim)
@@ -102,7 +102,7 @@ class DIVAN(nn.Module):
 
 
     def forward(self, batch_dict):
-        # output = α * din_mlp() + (1-α) * pop_score
+        # 核心公式: output = α * din_mlp() + (1-α) * pop_score
 
         # user_id形状为(batch,1)，torch的embedding层会在原形状最后添加一个embedding_dim，变成(batch,1,embedding_dim)，因此需要squeeze成(batch,embedding_dim)
         user_id = batch_dict['user_id'].squeeze(-1)

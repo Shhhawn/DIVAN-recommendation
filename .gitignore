@@ -37,3 +37,4 @@ venv.bak/
 Thumbs.db
 ehthumbs.db
 *.swp
+src/unit_test.ipynb

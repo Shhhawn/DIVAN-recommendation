@@ -12,9 +12,12 @@ class GPUFeatureCache(nn.Module):
                  max_topic_len=3):
         """
         :param news_feat_dict: 离线新闻属性字典
+        :param train_history_dict: 训练集用户历史表
         :param user_history_dict: 离线用户历史字典
         :param article_num: 物品最大 ID + 1
         :param user_num: 用户最大 ID + 1
+        :param max_history_len: 最大保留历史条数
+        :param max_topic_len: 最多保留topic数
         """
         super(GPUFeatureCache, self).__init__()
         print("正在向 GPU 显存构建全局特征查找表 (GPUFeatureCache)...")
