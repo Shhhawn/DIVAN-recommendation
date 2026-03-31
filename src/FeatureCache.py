@@ -73,14 +73,14 @@ class GPUFeatureCache(nn.Module):
 
     def forward(self, user_id, target_id, imp_time):
         """
-        前向查询引擎：接收一个 Batch 的光秃秃 ID，瞬间返回所有的富文本特征和计算结果
+        前向查询引擎：接收一个 Batch 的 ID，返回所有的富文本特征和计算结果
         """
         # 1. 极速查表
         if self.training:
             history_ids = self.train_history[user_id]   # (B, 50)
         else:
             history_ids = self.val_history[user_id]     # (B, 50)
-        # history_ids = self.user_to_history[user_id]             
+        # history_ids = self.user_to_history[user_id]
         history_category = self.article_to_cat[history_ids]
         target_type = self.article_to_type[target_id]           # (B,)
         target_topics = self.article_to_topics[target_id]       # (B, 3)

@@ -11,7 +11,7 @@ class CrossLayer(nn.Module):
         self.layer_num = layer_num
         self.cross_layers = nn.ModuleList([
             nn.Linear(embedding_dim, embedding_dim) for _ in range(layer_num)
-            ])
+        ])
 
     def forward(self, x0):
         """

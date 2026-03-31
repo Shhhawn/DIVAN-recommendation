@@ -12,10 +12,7 @@ class DINAttention(nn.Module):
         list = []
         last_dim = embedding_dim * 4
 
-<<<<<<< HEAD
         # 构建注意力网络
-=======
->>>>>>> f298d83a6016a819e8a026e2d5d5d31639cb3989
         for dim in hidden_dim:
             list.append(nn.Linear(last_dim, dim))
             list.append(nn.ReLU())
@@ -44,7 +41,7 @@ class DINAttention(nn.Module):
         # attention_score形状(batch, seq_len, 1)
         attention_score = self.attention_mlp(input)
 
-        # 不能写成if mask:
+        # [!note] 不能写成if mask:
         if mask is not None:
             assert mask.dim() == 2, f"mask应该是2维，现在是{mask.dim()}维"
             # mask形状是(batch, seq_len)，先将mask扩充一维使其与attention_score的形状对齐

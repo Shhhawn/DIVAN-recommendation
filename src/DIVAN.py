@@ -156,7 +156,7 @@ class DIVAN(nn.Module):
         target_din_input = torch.cat([target_id_emb, target_category_emb, target_content_emb], dim=-1)
         history_din_input = torch.cat([history_ids_emb, hist_category_emb, history_content_emb], dim=-1)
         
-
+        # 确保发布时间形状为(B,D)
         if target_published_ts_emb_input.dim() == 1:
             target_published_ts_emb_input = target_published_ts_emb_input.unsqueeze(-1)
         target_published_ts_emb_input = self.time_linear(target_published_ts_emb_input) # (B,16)
@@ -174,10 +174,17 @@ class DIVAN(nn.Module):
                 "alpha": torch.ones_like(alpha)           # 权重全给 DIN
             }
 
-        pop_score = self.pop_net(recency_emb=target_published_ts_emb_input, content_emb=target_content_emb)
+        pop_score = self.pop_net(
+            recency_emb=target_published_ts_emb_input, 
+            content_emb=target_content_emb
+        )
         pop_proba = torch.sigmoid(pop_score)
 
-        alpha = self.gate(user_emb=user_concated_emb, recency_emb=target_published_ts_emb_input, content_emb=target_content_emb)
+        alpha = self.gate(
+            user_emb=user_concated_emb, 
+            recency_emb=target_published_ts_emb_input, 
+            content_emb=target_content_emb
+        )
         
         y_pred = alpha * din_proba + (1 - alpha) * pop_proba
         self.current_alpha_mean = alpha.detach().mean().item()

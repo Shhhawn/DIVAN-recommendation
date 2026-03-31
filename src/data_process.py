@@ -261,7 +261,7 @@ def process_history_dynamic(
 class EbnerdDataset(Dataset):
     def __init__(self, parquet_path):
         """
-        :param parquet_path: process_history_dynamic 输出的字典列表
+        :param parquet_path: process_history_dynamic 输出的字典列表落盘后的地址
         """
         print(f"加载{parquet_path}...")
         df = pl.read_parquet(parquet_path)

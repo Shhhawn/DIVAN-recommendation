@@ -179,6 +179,7 @@ def calc_single_group_metrics(preds, labels):
     
     return auc, mrr, ndcg_5, ndcg_10
 
+
 def print_model_stats(model):
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     all_params = sum(p.numel() for p in model.parameters())
@@ -187,6 +188,7 @@ def print_model_stats(model):
     print(f"   Trainable Params: {trainable_params:,}")
     print(f"   Total Params: {all_params:,}")
     print("-" * 30)
+
 
 def calculate_ndcg_at_k(labels, preds, k):
     """

@@ -5,6 +5,14 @@
 本项目基于 Ebnerd 数据集（支持 Small/Large 规模），实现并工程化了 DIVAN (Deep Interactive and Visual Attention Network) 新闻推荐模型。
 项目不仅复现了以 DIN (深度兴趣网络) 和 PopNet (流行度网络) 为双塔核心的算法架构，更在工程实现上进行了极限压榨：重构了 GPU 显存级特征查表、引入了 Polars 极速数据处理引擎，并搭建了无死锁的 CPU 全核并发评估管线，实现了一套极度稳定、支持上万 Batch Size 的大厂级训练框架。
 
+单次实验效果：
+- val_loss 1.022253590
+- group_auc 0.698230152 
+- global_auc 0.664519712 
+- mrr 0.464735697  
+- ndcg_5 0.522872937 
+- ndcg_10 0.570837287 
+
 ---
 
 ## 2. 数据处理与极速流转管线 (Data Pipeline)
