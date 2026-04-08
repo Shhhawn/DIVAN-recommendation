@@ -170,8 +170,8 @@ class DIVAN(nn.Module):
             return {
                 "y_pred": din_proba,      # 强制把最终预测指向 din
                 "din_proba": din_proba,
-                "vir_proba": torch.zeros_like(din_proba), # 用 0 占位防报错
-                "alpha": torch.ones_like(alpha)           # 权重全给 DIN
+                "vir_proba": None, # 用 0 占位防报错
+                "alpha": None           # 权重全给 DIN
             }
 
         pop_score = self.pop_net(

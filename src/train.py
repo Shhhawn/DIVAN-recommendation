@@ -227,20 +227,42 @@ def evaluate(model, val_loader, device, criterion, mode='DIVAN'):
             # 接收字典
             return_dict = model(batch_dict) 
                 
-            # 从中提取真正的预测概率
-            y_pred = return_dict["y_pred"].view(-1).float()
-            din_proba = return_dict["din_proba"].view(-1).float()
-            vir_proba = return_dict["vir_proba"].view(-1).float()
-            alpha = return_dict["alpha"].float()
-            label = batch_dict['label'].view(-1).float()
+            # # 从中提取真正的预测概率
+            # y_pred = return_dict["y_pred"].view(-1).float()
+            # din_proba = return_dict["din_proba"].view(-1).float()
+            # vir_proba = return_dict["vir_proba"].view(-1).float()
+            # alpha = return_dict["alpha"].float()
+            # label = batch_dict['label'].view(-1).float()
             
-            # 验证集通常只看最终输出的 Loss 就足够了
+            # # 验证集通常只看最终输出的 Loss 就足够了
+            # loss_final = criterion(y_pred, label)
+            # loss_din = criterion(din_proba, label)
+            # loss_pop = criterion(vir_proba, label)
+            # loss_alpha_reg = 1e-4 * torch.norm(alpha)
+            # loss = loss_final + loss_din + loss_pop + loss_alpha_reg
+            # val_loss += loss.item()
+
+            # 1. 提取所有模式共有的主预测值和真实标签
+            y_pred = return_dict["y_pred"].view(-1).float()
+            label = batch_dict['label'].view(-1).float()
             loss_final = criterion(y_pred, label)
-            loss_din = criterion(din_proba, label)
-            loss_pop = criterion(vir_proba, label)
-            loss_alpha_reg = 1e-4 * torch.norm(alpha)
-            loss = loss_final + loss_din + loss_pop + loss_alpha_reg
+            
+            # 2. 动态判断：如果是完整 DIVAN 模式，则提取辅助网络并加上辅助 Loss
+            if return_dict.get("vir_proba") is not None and return_dict.get("alpha") is not None:
+                din_proba = return_dict["din_proba"].view(-1).float()
+                vir_proba = return_dict["vir_proba"].view(-1).float()
+                alpha = return_dict["alpha"].float()
+                
+                loss_din = criterion(din_proba, label)
+                loss_pop = criterion(vir_proba, label)
+                loss_alpha_reg = 1e-4 * torch.norm(alpha)
+                loss = loss_final + loss_din + loss_pop + loss_alpha_reg
+            else:
+                # 如果是 DIN Baseline 模式，只有主 Loss
+                loss = loss_final
+                
             val_loss += loss.item()
+
 
             # 提取预测值并存入列表
             all_preds_list.append(y_pred.cpu().numpy().flatten())
@@ -502,14 +524,17 @@ def main(model="DIVAN"):
             
             # 计算“三重辅助误差”
             loss_final = criterion(return_dict["y_pred"].view(-1), y_true)
-            loss_din = criterion(return_dict["din_proba"].view(-1), y_true)
-            loss_pop = criterion(return_dict["vir_proba"].view(-1), y_true)
+            if return_dict["vir_proba"] is not None and return_dict["alpha"] is not None:
+                loss_din = criterion(return_dict["din_proba"].view(-1), y_true)
+                loss_pop = criterion(return_dict["vir_proba"].view(-1), y_true)
             
-            # alpha 的 L2 正则化惩罚
-            loss_alpha_reg = 1e-4 * torch.norm(return_dict["alpha"])
+                # alpha 的 L2 正则化惩罚
+                loss_alpha_reg = 1e-4 * torch.norm(return_dict["alpha"])
             
-            # 总 Loss
-            loss = loss_final + loss_din + loss_pop + loss_alpha_reg
+                # 总 Loss
+                loss = loss_final + loss_din + loss_pop + loss_alpha_reg
+            else:
+                loss = loss_final
             
             # 反向传播
             loss.backward()
@@ -601,4 +626,4 @@ def main(model="DIVAN"):
 
 
 if __name__ == "__main__":
-    main()
+    main(model="DIN")
